@@ -72,7 +72,7 @@ def process(args):
     walks = graph.build_deepwalk_corpus(G, num_paths=args.number_walks,
                                         path_length=args.walk_length, alpha=0, rand=random.Random(args.seed))
     print("Training...")
-    model = Word2Vec(walks, size=args.representation_size, window=args.window_size, min_count=0, workers=args.workers)
+    model = Word2Vec(walks, size=args.representation_size, window=args.window_size, min_count=0, workers=args.workers, iter=args.iter)
   else:
     print("Data size {} is larger than limit (max-memory-data-size: {}).  Dumping walks to disk.".format(data_size, args.max_memory_data_size))
     print("Walking...")
@@ -92,7 +92,7 @@ def process(args):
     print("Training...")
     model = Skipgram(sentences=serialized_walks.combine_files_iter(walk_files), vocabulary_counts=vertex_counts,
                      size=args.representation_size,
-                     window=args.window_size, min_count=0, workers=args.workers)
+                     window=args.window_size, min_count=0, workers=args.workers, iter=args.iter)
 
   model.save_word2vec_format(args.output)
 
@@ -141,14 +141,16 @@ def main():
                            'calculating the vocabulary.')
 
   parser.add_argument('--walk-length', default=40, type=int,
-                      help='Length of the random walk started at each node')
+                      help='Length of the random walk started at each node.')
 
   parser.add_argument('--window-size', default=5, type=int,
                       help='Window size of skipgram model.')
 
+  parser.add_argument('--iter', default=5, type=int,
+                      help='Number of epochs in optimisation.')
+
   parser.add_argument('--workers', default=1, type=int,
                       help='Number of parallel processes.')
-
 
   args = parser.parse_args()
   numeric_level = getattr(logging, args.log.upper(), None)
