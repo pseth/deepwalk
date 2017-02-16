@@ -19,6 +19,8 @@ from six import text_type as unicode
 from six import iteritems
 from six.moves import range
 
+import pandas as pd
+
 import psutil
 from multiprocessing import cpu_count
 
@@ -71,8 +73,15 @@ def process(args):
     print("Walking...")
     walks = graph.build_deepwalk_corpus(G, num_paths=args.number_walks,
                                         path_length=args.walk_length, alpha=0, rand=random.Random(args.seed))
-    print("Training...")
-    model = Word2Vec(walks, size=args.representation_size, window=args.window_size, min_count=0, workers=args.workers, iter=args.iter)
+    if args.init:
+        print("Training with user-initialised embeddings...")
+        model = Word2Vec(size=args.representation_size, window=args.window_size, min_count=0, workers=args.workers, iter=args.iter)
+        model.build_vocab(walks,trim_rule=None)
+        model.intersect_word2vec_format(args.init,lockf=1.0,binary=False) # lockf = 1 allows further training
+        model.train(walks)
+    else:
+        print("Training with randomised embeddings...")
+        model = Word2Vec(walks, size=args.representation_size, window=args.window_size, min_count=0, workers=args.workers, iter=args.iter)
   else:
     print("Data size {} is larger than limit (max-memory-data-size: {}).  Dumping walks to disk.".format(data_size, args.max_memory_data_size))
     print("Walking...")
@@ -111,6 +120,12 @@ def main():
   parser.add_argument('--input', nargs='?', required=True,
                       help='Input graph file')
 
+  parser.add_argument('--init', default=False,
+                      help='Initial embeddings file in Word2Vec format')
+
+  parser.add_argument('--iter', default=5, type=int,
+                      help='Number of epochs in optimisation.')
+
   parser.add_argument("-l", "--log", dest="log", default="INFO",
                       help="log verbosity level")
 
@@ -145,9 +160,6 @@ def main():
 
   parser.add_argument('--window-size', default=5, type=int,
                       help='Window size of skipgram model.')
-
-  parser.add_argument('--iter', default=5, type=int,
-                      help='Number of epochs in optimisation.')
 
   parser.add_argument('--workers', default=1, type=int,
                       help='Number of parallel processes.')
