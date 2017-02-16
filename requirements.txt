@@ -6,3 +6,4 @@ six>=1.7.3
 gensim>=0.10.2
 scipy>=0.7.0
 psutil>=2.1.1
+pandas>=0.19.2
