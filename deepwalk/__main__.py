@@ -75,7 +75,7 @@ def process(args):
                                         path_length=args.walk_length, alpha=0, rand=random.Random(args.seed))
     if args.init:
         print("Training with user-initialised embeddings...")
-        model = Word2Vec(size=args.representation_size, window=args.window_size, min_count=0, workers=args.workers, iter=args.iter)
+        model = Word2Vec(size=args.representation_size, window=args.window_size, min_count=0, alpha=args.alpha, workers=args.workers, iter=args.iter)
         model.build_vocab(walks,trim_rule=None)
         model.intersect_word2vec_format(args.init,lockf=1.0,binary=False) # lockf = 1 allows further training
         model.train(walks)
@@ -110,6 +110,9 @@ def main():
   parser = ArgumentParser("deepwalk",
                           formatter_class=ArgumentDefaultsHelpFormatter,
                           conflict_handler='resolve')
+
+  parser.add_argument('--alpha', default=0.025, type=float,
+                      help='Learning rate')
 
   parser.add_argument("--debug", dest="debug", action='store_true', default=False,
                       help="drop a debugger if an exception is raised.")
